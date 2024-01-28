@@ -1,4 +1,4 @@
-name: Compile FFMPEG for Windows
+name: Compile FFMPEG for Ubuntu
 
 on:
   push:
