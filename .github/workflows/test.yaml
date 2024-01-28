@@ -1,0 +1,92 @@
+name: Compile FFMPEG for Windows
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+        - name: Install dependencies
+          run: |
+            apt-get update -qq && \
+            apt-get -y install \
+            autoconf \
+            automake \
+            build-essential \
+            cmake \
+            git-core \
+            libass-dev \
+            libfreetype6-dev \
+            libgnutls28-dev \
+            libmp3lame-dev \
+            libsdl2-dev \
+            libtool \
+            libva-dev \
+            libvdpau-dev \
+            libvorbis-dev \
+            libxcb1-dev \
+            libxcb-shm0-dev \
+            libxcb-xfixes0-dev \
+            meson \
+            ninja-build \
+            pkg-config \
+            texinfo \
+            wget \
+            yasm \
+            zlib1g-dev \
+            libunistring-dev \ 
+            libaom-dev
+        - name: Make Directories
+          run: |
+            mkdir -p ~/ffmpeg_sources ~/bin
+            mkdir -p ~/ffmpeg_build/lib
+        - name: Install VMAF
+          run: |
+            cd ~/ffmpeg_sources && \
+            wget https://github.com/Netflix/vmaf/archive/v2.3.1.tar.gz && \
+            tar xvf v2.3.1.tar.gz && \
+            mkdir -p vmaf-2.3.1/libvmaf/build &&\
+            cd vmaf-2.3.1/libvmaf/build && \
+            meson setup -Denable_tests=false -Denable_docs=false --buildtype=release --default-library=static .. --prefix "$HOME/ffmpeg_build" --bindir="$HOME/bin" --libdir="$HOME/ffmpeg_build/lib" && \
+            ninja && \
+            ninja install
+        - name: Install FFMPEG
+          run: |
+            cd ~/ffmpeg_sources && \
+            wget -O ffmpeg-snapshot.tar.bz2 https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
+            tar xjvf ffmpeg-snapshot.tar.bz2 && \
+            cd ffmpeg && \
+            PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure \
+            --prefix="$HOME/ffmpeg_build" \
+            --pkg-config-flags="--static" \
+            --extra-cflags="-I$HOME/ffmpeg_build/include" \
+            --extra-ldflags="-L$HOME/ffmpeg_build/lib" \
+            --extra-libs="-lpthread -lm" \
+            --ld="g++" \
+            --bindir="$HOME/bin" \
+            --enable-gpl \
+            --enable-gnutls \
+            --enable-libaom \
+            --enable-libass \
+            --enable-libfdk-aac \
+            --enable-libfreetype \
+            --enable-libmp3lame \
+            --enable-libopus \
+            --enable-libsvtav1 \
+            --enable-libdav1d \
+            --enable-libvorbis \
+            --enable-libvpx \
+            --enable-libx264 \
+            --enable-libx265 \
+            --enable-nonfree && \
+            PATH="$HOME/bin:$PATH" make && \
+            make install && \
+            hash -r
+        - name: List directories
+          run: |
+            ls -lRa ~/bin
