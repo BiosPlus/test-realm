@@ -40,9 +40,7 @@ jobs:
             texinfo \
             wget \
             yasm \
-            zlib1g-dev \
-            libunistring-dev \ 
-            libaom-dev
+            zlib1g-dev
         - name: Make Directories
           run: |
             mkdir -p ~/ffmpeg_sources ~/bin
